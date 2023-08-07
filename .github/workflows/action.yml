@@ -1,0 +1,50 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Weekly Crawling Bot
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  schedule: # runs the code twice a month on 0200 sunday.
+  - cron: '0 17 1-7 * 6'
+  - cron: '0 17 15-21 * 6'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    strategy : 
+      matrix:
+        python-version: [3.7]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      - name: Set up python ${{ matrix.python-version }}
+      - uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install python package
+        run: |
+          pip install selenium
+          pip install requests
+          pip install --upgrade google-api-python-client oauth2client
+          pip install playwright
+          python -m playwright install ${{ matrix.browser-channel }} --with-deps
+
+      - name: Install ubuntu package
+        run: |        
+          sudo apt-get install fonts-unfonts-core
+          sudo apt-get install fonts-unfonts-extra
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add        
+          sudo apt-get install google-chrome-stable    
+          wget https://chromedriver.storage.googleapis.com/100.0.4896.20/chromedriver_linux64.zip
+          unzip ./chromedriver_linux64.zip
+
+      - name: Run code
+        run: |
+          python ./autocrawler.py
